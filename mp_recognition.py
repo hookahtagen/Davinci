@@ -17,7 +17,7 @@ from os.path import isfile, join
 # OpenCV is *not* required to use the face_recognition library. It's only required if you want to run this
 # specific demo. If you have trouble installing it, try any of the other demos that don't require it instead.
 
-files = [f for f in listdir("C:/Users/Hendrik/Documents/OpenAI/Davinci/FaceEncodings/") if isfile(join("C:/Users/Hendrik/Documents/OpenAI/Davinci/FaceEncodings/", f))]
+files = [f for f in listdir("/home/hendrik/Dokumente/Davinci/Davinci/FaceEncodings/") if isfile(join("/home/hendrik/Dokumente/Davinci/Davinci/FaceEncodings/", f))]
 
 
 
@@ -26,6 +26,8 @@ def debug(code=0):
     
 
 def get_encodings(path=""):
+    global known_face_encodings
+    global known_face_names
     
     for name in Global.files:
         path2 = path + name
@@ -113,9 +115,9 @@ def process(worker_id, read_frame_list, write_frame_list, Global, worker_num):
         Global.read_num = next_id(Global.read_num, worker_num)
 
         # Convert the image from BGR color (which OpenCV uses) to RGB color (which face_recognition uses)
-        rgb_frame = frame_process[:, :, ::-1]
+        rgb_frame = cv2.cvtColor(frame_process, cv2.COLOR_BGR2RGB)
 
-        # Find all the faces and face encodings in the frame of video, cost most time
+        # Find all the faces and face encodings in the frame of video, cost most timeq
         face_locations = face_recognition.face_locations(rgb_frame)
         face_encodings = face_recognition.face_encodings(rgb_frame, face_locations)
 
@@ -171,14 +173,16 @@ if __name__ == '__main__':
     read_frame_list = Manager().dict()
     write_frame_list = Manager().dict()
 
-    Global.path ="C:/Users/Hendrik/Documents/OpenAI/Davinci/FaceEncodings/"
+    Global.path ="/home/hendrik/Dokumente/Davinci/Davinci/FaceEncodings/"
     Global.files = files
     length=len(Global.files)
     print("länge: "+str(length))
     
     _known_face_encodings = { "known_face_encodings":[] }
+    _known_face_names = { "known_face_names":[] }
 
-    known_face_encodings = Manager().dict()
+    known_face_encodings = Manager().dict(_known_face_encodings)
+    known_face_names = Manager().dict(_known_face_names)
 
     Global.known_face_encodings=[]
     Global.known_face_names=[]
