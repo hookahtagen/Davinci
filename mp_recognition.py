@@ -190,10 +190,7 @@ if __name__ == '__main__':
     global known_face_names
     known_face_encodings = Manager().dict(_known_face_encodings)
     known_face_names = Manager().dict(_known_face_names)
-
-    known_face_encodings = Manager().dict(_known_face_encodings)
-    known_face_names = Manager().dict(_known_face_names)
-
+    
     # Global.known_face_encodings=[""]
     # Global.known_face_names=[""]
 
