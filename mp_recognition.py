@@ -5,6 +5,7 @@ import time
 import numpy
 import threading
 import platform
+import sys
 
 from os import listdir
 from os.path import isfile, join
@@ -15,6 +16,44 @@ from os.path import isfile, join
 # PLEASE NOTE: This example requires OpenCV (the `cv2` library) to be installed only to read from your webcam.
 # OpenCV is *not* required to use the face_recognition library. It's only required if you want to run this
 # specific demo. If you have trouble installing it, try any of the other demos that don't require it instead.
+
+files = [f for f in listdir("C:/Users/Hendrik/Documents/OpenAI/Davinci/FaceEncodings/") if isfile(join("C:/Users/Hendrik/Documents/OpenAI/Davinci/FaceEncodings/", f))]
+length = len(files)
+known_face_encodings=[]
+known_face_names=[]
+
+
+def debug(code=0):
+    print("DEBUG "+str(code))
+
+def append_names(tmp3='', tmp4='', counter=0):
+    length=len(known_face_encodings)
+    #print("länge: "+str(length))
+    #print("Counter= "+str(counter))
+    known_face_encodings.append(tmp3)
+    known_face_names.append(tmp4)
+
+def get_encodings(path=""):
+    
+    for name in Global.files:
+        path2 = path + name
+
+        tmp1 = face_recognition.load_image_file(path2)
+        tmp2 = face_recognition.face_encodings(tmp1)[0]
+
+        locals()[name.replace('.jpg','_image')] = tmp1
+        locals()[name.replace('.jpg','_encoding')] = tmp2
+    
+    i=0
+    for listitem in Global.files:
+        tmp3=listitem.replace('.jpg','_encoding')
+        tmp4=listitem.replace('.jpg','')
+        append_names(tmp3, tmp4)
+        i+=1
+
+    print("i= "+ str(i))
+    print(known_face_encodings)
+    #debug(0)
 
 
 # Get next worker's id
@@ -58,8 +97,6 @@ def capture(read_frame_list, Global, worker_num):
 
 # Many subprocess use to process frames.
 def process(worker_id, read_frame_list, write_frame_list, Global, worker_num):
-    known_face_encodings = Global.known_face_encodings
-    known_face_names = Global.known_face_names
     while not Global.is_exit:
 
         # Wait to read
@@ -87,13 +124,13 @@ def process(worker_id, read_frame_list, write_frame_list, Global, worker_num):
         face_encodings = face_recognition.face_encodings(rgb_frame, face_locations)
 
         # Loop through each face in this frame of video
-        for (top, right, bottom, left), face_encoding in zip(face_locations, face_encodings):
+        for (top, right, bottom, left), face_encodings in zip(face_locations, face_encodings):
             # See if the face is a match for the known face(s)
-            matches = face_recognition.compare_faces(known_face_encodings, face_encoding)
+            matches = face_recognition.compare_faces(known_face_encodings, face_encodings)
 
             name = "Unknown"
 
-            # If a match was found in known_face_encodings, just use the first one.
+            # If a match was found in Global.known_face_encodings, just use the first one.
             if True in matches:
                 first_match_index = matches.index(True)
                 name = known_face_names[first_match_index]
@@ -104,6 +141,7 @@ def process(worker_id, read_frame_list, write_frame_list, Global, worker_num):
             # Draw a label with a name below the face
             cv2.rectangle(frame_process, (left, bottom - 35), (right, bottom), (0, 0, 255), cv2.FILLED)
             font = cv2.FONT_HERSHEY_DUPLEX
+            print("name="+name)
             cv2.putText(frame_process, name, (left + 6, bottom - 6), font, 1.0, (255, 255, 255), 1)
 
         # Wait to write
@@ -118,6 +156,8 @@ def process(worker_id, read_frame_list, write_frame_list, Global, worker_num):
 
 
 if __name__ == '__main__':
+
+    
 
     # Fix Bug on MacOS
     if platform.system() == 'Darwin':
@@ -134,6 +174,20 @@ if __name__ == '__main__':
     read_frame_list = Manager().dict()
     write_frame_list = Manager().dict()
 
+    Global.path ="C:/Users/Hendrik/Documents/OpenAI/Davinci/FaceEncodings/"
+    Global.files = files
+    length=len(Global.files)
+    print("länge: "+str(length))
+    print(known_face_encodings)
+
+    print("******************************************\n\n\n")
+   
+    get_encodings(Global.path)
+
+
+    print("Face Encodings:\n")
+    print(known_face_encodings)
+
     # Number of workers (subprocess use to process frames)
     if cpu_count() > 2:
         worker_num = cpu_count() - 1  # 1 for capturing frames
@@ -147,38 +201,7 @@ if __name__ == '__main__':
     p.append(threading.Thread(target=capture, args=(read_frame_list, Global, worker_num,)))
     p[0].start()
 
-   # Load a sample picture and learn how to recognize it.
-    obama_image = face_recognition.load_image_file("C:/Users/Hendrik/Documents/OpenAI\Davinci/obama.jpg")
-    obama_encoding = face_recognition.face_encodings(obama_image)[0]
-
-    michelle_obama_image = face_recognition.load_image_file("C:/Users/Hendrik/Documents/OpenAI\Davinci/michelle obama.jpg")
-    michelle_obama_encoding = face_recognition.face_encodings(michelle_obama_image)[0]
-
-    hendrik_image = face_recognition.load_image_file("C:/Users/Hendrik/Documents/OpenAI\Davinci/hendrik.jpg")
-    hendrik_encoding = face_recognition.face_encodings(hendrik_image)[0]
-
-    jan_image = face_recognition.load_image_file("C:/Users/Hendrik/Documents/OpenAI\Davinci/Jan Vogel.jpg")
-    jan_encoding = face_recognition.face_encodings(jan_image)[0]
-
-    angelique_image = face_recognition.load_image_file("C:/Users/Hendrik/Documents/OpenAI\Davinci/Angelique Juchem.jpg")
-    angelique_encoding = face_recognition.face_encodings(angelique_image)[0]
-
-    # Create arrays of known face encodings and their names
-    Global.known_face_encodings = [
-        obama_encoding,
-        michelle_obama_encoding,
-        hendrik_encoding,
-        jan_encoding,
-        angelique_encoding
-    ]
-
-    Global.known_face_names = [
-        "Barack Obama",
-        "Michelle Obama",
-        "Hendrik Siemens",
-        "Jan Vogel",
-        "Angelique Juchem"
-    ]
+   
 
     # Create workers
     for worker_id in range(1, worker_num + 1):
@@ -200,7 +223,7 @@ if __name__ == '__main__':
             if len(fps_list) > 5 * worker_num:
                 fps_list.pop(0)
             fps = len(fps_list) / numpy.sum(fps_list)
-            print("fps: %.2f" % fps)
+            #print("fps: %.2f" % fps)
 
             # Calculate frame delay, in order to make the video look smoother.
             # When fps is higher, should use a smaller ratio, or fps will be limited in a lower value.
