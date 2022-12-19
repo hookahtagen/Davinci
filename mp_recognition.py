@@ -41,6 +41,8 @@ def get_encodings(path=""):
         tmp3=listitem.replace('.jpg','_encoding')
         tmp4=listitem.replace('.jpg','')
 
+        print(len(known_face_encodings))
+
         known_face_encodings["known_face_encodings"] += [tmp3]
         known_face_names["known_face_names"] += [tmp4]
 
@@ -93,6 +95,8 @@ def capture(read_frame_list, Global, worker_num):
 
 # Many subprocess use to process frames.
 def process(worker_id, read_frame_list, write_frame_list, Global, worker_num):
+    global known_face_encodings
+    global known_face_names
     while not Global.is_exit:
 
         # Wait to read
@@ -174,14 +178,20 @@ if __name__ == '__main__':
     Global.path ="C:/Users/Hendrik/Documents/OpenAI/Davinci/FaceEncodings/"
     Global.files = files
     length=len(Global.files)
-    print("länge: "+str(length))
+    print("länge123: "+str(length))
     
     _known_face_encodings = { "known_face_encodings":[] }
+    _known_face_names = { "known_face_names":[] }
 
-    known_face_encodings = Manager().dict()
 
-    Global.known_face_encodings=[]
-    Global.known_face_names=[]
+    global known_face_encodings
+    global known_face_names
+    known_face_encodings = Manager().dict(_known_face_encodings)
+    known_face_names = Manager().dict(_known_face_names)
+
+
+    # Global.known_face_encodings=[""]
+    # Global.known_face_names=[""]
 
 
     print("******************************************\n\n\n")
@@ -190,7 +200,7 @@ if __name__ == '__main__':
 
 
     print("Face Encodings:\n")
-    print(Global.known_face_encodings)
+    print(known_face_encodings)
 
     # Number of workers (subprocess use to process frames)
     if cpu_count() > 2:
