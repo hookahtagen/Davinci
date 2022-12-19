@@ -18,20 +18,12 @@ from os.path import isfile, join
 # specific demo. If you have trouble installing it, try any of the other demos that don't require it instead.
 
 files = [f for f in listdir("C:/Users/Hendrik/Documents/OpenAI/Davinci/FaceEncodings/") if isfile(join("C:/Users/Hendrik/Documents/OpenAI/Davinci/FaceEncodings/", f))]
-length = len(files)
-known_face_encodings=[]
-known_face_names=[]
+
 
 
 def debug(code=0):
     print("DEBUG "+str(code))
-
-def append_names(tmp3='', tmp4='', counter=0):
-    length=len(known_face_encodings)
-    #print("länge: "+str(length))
-    #print("Counter= "+str(counter))
-    known_face_encodings.append(tmp3)
-    known_face_names.append(tmp4)
+    
 
 def get_encodings(path=""):
     
@@ -48,11 +40,15 @@ def get_encodings(path=""):
     for listitem in Global.files:
         tmp3=listitem.replace('.jpg','_encoding')
         tmp4=listitem.replace('.jpg','')
-        append_names(tmp3, tmp4)
+
+        known_face_encodings["known_face_encodings"] += [tmp3]
+        known_face_names["known_face_names"] += [tmp4]
+
+        
         i+=1
 
     print("i= "+ str(i))
-    print(known_face_encodings)
+    #print(known_face_encodings)
     #debug(0)
 
 
@@ -126,7 +122,8 @@ def process(worker_id, read_frame_list, write_frame_list, Global, worker_num):
         # Loop through each face in this frame of video
         for (top, right, bottom, left), face_encodings in zip(face_locations, face_encodings):
             # See if the face is a match for the known face(s)
-            matches = face_recognition.compare_faces(known_face_encodings, face_encodings)
+            #print(known_face_encodings["known_face_encodings"][0])
+            matches = face_recognition.compare_faces(known_face_encodings["known_face_encodings"], face_encodings)
 
             name = "Unknown"
 
@@ -178,7 +175,14 @@ if __name__ == '__main__':
     Global.files = files
     length=len(Global.files)
     print("länge: "+str(length))
-    print(known_face_encodings)
+    
+    _known_face_encodings = { "known_face_encodings":[] }
+
+    known_face_encodings = Manager().dict()
+
+    Global.known_face_encodings=[]
+    Global.known_face_names=[]
+
 
     print("******************************************\n\n\n")
    
@@ -186,7 +190,7 @@ if __name__ == '__main__':
 
 
     print("Face Encodings:\n")
-    print(known_face_encodings)
+    print(Global.known_face_encodings)
 
     # Number of workers (subprocess use to process frames)
     if cpu_count() > 2:

@@ -27,4 +27,3 @@ def get_encodings(path=""):
     
     
 
-get_encodings("C:/Users/Hendrik/Documents/OpenAI/Davinci/FaceEncodings/")
