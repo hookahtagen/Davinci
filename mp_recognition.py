@@ -17,19 +17,19 @@ from os.path import isfile, join
 # OpenCV is *not* required to use the face_recognition library. It's only required if you want to run this
 # specific demo. If you have trouble installing it, try any of the other demos that don't require it instead.
 
-files = [f for f in listdir("/home/hendrik/Dokumente/Davinci/Davinci/FaceEncodings/") if isfile(join("/home/hendrik/Dokumente/Davinci/Davinci/FaceEncodings/", f))]
-
-
 
 def debug(code=0):
     print("DEBUG "+str(code))
     
 
-def get_encodings(path=""):
-    global known_face_encodings
-    global known_face_names
+def get_encodings(path="", known_face_encodings=[], known_face_names=[]):
+
     
-    for name in Global.files:
+    #Get all Pictures under the given path
+    #Store them in a list with file-endings
+    files = [f for f in listdir(path) if isfile(join(path, f))]
+    
+    for name in files:
         path2 = path + name
 
         tmp1 = face_recognition.load_image_file(path2)
@@ -38,22 +38,16 @@ def get_encodings(path=""):
         locals()[name.replace('.jpg','_image')] = tmp1
         locals()[name.replace('.jpg','_encoding')] = tmp2
     
-    i=0
-    for listitem in Global.files:
-        tmp3=listitem.replace('.jpg','_encoding')
-        tmp4=listitem.replace('.jpg','')
+    for listitem in files:
+        known_face_encodings.append(str(listitem.replace('.jpg','_encoding').replace(' ','_')))
+        known_face_names.append(str(listitem.replace('.jpg','')))
 
-        print(len(known_face_encodings))
+    print("TestTestTest***********************")
+    print(known_face_encodings)
+    print(known_face_names)
+    print("TestTestTest**********************")
 
-        known_face_encodings["known_face_encodings"] += [tmp3]
-        known_face_names["known_face_names"] += [tmp4]
-
-        
-        i+=1
-
-    print("i= "+ str(i))
-    #print(known_face_encodings)
-    #debug(0)
+    return known_face_encodings, known_face_names
 
 
 # Get next worker's id
@@ -97,8 +91,10 @@ def capture(read_frame_list, Global, worker_num):
 
 # Many subprocess use to process frames.
 def process(worker_id, read_frame_list, write_frame_list, Global, worker_num):
-    global known_face_encodings
-    global known_face_names
+    
+    known_face_encodings = Global.known_face_encodings
+    known_face_names = Global.known_face_names
+
     while not Global.is_exit:
 
         # Wait to read
@@ -126,10 +122,16 @@ def process(worker_id, read_frame_list, write_frame_list, Global, worker_num):
         face_encodings = face_recognition.face_encodings(rgb_frame, face_locations)
 
         # Loop through each face in this frame of video
+        i=0
         for (top, right, bottom, left), face_encodings in zip(face_locations, face_encodings):
             # See if the face is a match for the known face(s)
             #print(known_face_encodings["known_face_encodings"][0])
-            matches = face_recognition.compare_faces(known_face_encodings["known_face_encodings"], face_encodings)
+
+            print("1234567890*******************************************\n\n")
+            print  (Global.known_face_encodings)
+            print("\n\n*******************************************")
+
+            matches = face_recognition.compare_faces(known_face_encodings, face_encodings)
 
             name = "Unknown"
 
@@ -144,8 +146,10 @@ def process(worker_id, read_frame_list, write_frame_list, Global, worker_num):
             # Draw a label with a name below the face
             cv2.rectangle(frame_process, (left, bottom - 35), (right, bottom), (0, 0, 255), cv2.FILLED)
             font = cv2.FONT_HERSHEY_DUPLEX
-            print("name="+name)
+            if "Hendrik Siemens" in name:
+                name = name + " (Admin)"
             cv2.putText(frame_process, name, (left + 6, bottom - 6), font, 1.0, (255, 255, 255), 1)
+            i+=1
 
         # Wait to write
         while Global.write_num != worker_id:
@@ -168,7 +172,7 @@ if __name__ == '__main__':
 
     # Global variables
     Global = Manager().Namespace()
-    Global.device = 2
+    Global.device = 0
     Global.buff_num = 1
     Global.read_num = 1
     Global.write_num = 1
@@ -178,30 +182,22 @@ if __name__ == '__main__':
     write_frame_list = Manager().dict()
 
     Global.path ="/home/hendrik/Dokumente/Davinci/Davinci/FaceEncodings/"
-    Global.files = files
-    length=len(Global.files)
-    print("länge123: "+str(length))
+    files = [f for f in listdir(Global.path) if isfile(join(Global.path, f))]
+
+    Global.known_face_encodings=[]
+    Global.known_face_names=[]
     
-    _known_face_encodings = { "known_face_encodings":[] }
-    _known_face_names = { "known_face_names":[] }
+    for name in files:
+        tmp1 = face_recognition.load_image_file(Global.path+name)
+        tmp2 = face_recognition.face_encodings(tmp1)[0]
 
-
-    global known_face_encodings
-    global known_face_names
-    known_face_encodings = Manager().dict(_known_face_encodings)
-    known_face_names = Manager().dict(_known_face_names)
-    
-    # Global.known_face_encodings=[""]
-    # Global.known_face_names=[""]
-
-
-    print("******************************************\n\n\n")
+        Global.known_face_encodings += [tmp2]
+        Global.known_face_names += [str(name.replace('.jpg',''))]
    
-    get_encodings(Global.path)
 
-
-    print("Face Encodings:\n")
-    print(known_face_encodings)
+    print("*******************************************")
+    print  (Global.known_face_encodings)
+    print("*******************************************")
 
     # Number of workers (subprocess use to process frames)
     if cpu_count() > 2:
