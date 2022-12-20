@@ -17,9 +17,57 @@ from os.path import isfile, join
 # OpenCV is *not* required to use the face_recognition library. It's only required if you want to run this
 # specific demo. If you have trouble installing it, try any of the other demos that don't require it instead.
 
+def admin_cfg(num=0):
+    lines = []
+
+    file = Global.path.replace('FaceEncodings/', '') + 'admin.cfg'
+    with open(file, 'r') as f:
+        lines = f.readlines()
+
+    for i, listitem in enumerate(lines):
+        if "admin-status" in listitem:
+            lines[i] = "admin-status = %d\n" % num
+
+    with open(file, 'w') as f:
+        f.writelines(lines)
+
 
 def debug(code=0):
     print("DEBUG "+str(code))
+
+def is_looking_at_camera(frame):
+    # Convert the frame to RGB
+    rgb_frame_1 = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+    # Use the face_recognition library to detect faces in the frame
+    face_locations = face_recognition.face_locations(rgb_frame_1)
+
+    # If there are no faces in the frame, return False
+    if len(face_locations) == 0:
+        return False
+
+    # Loop through the faces in the frame
+    for face_location in face_locations:
+        # Get the coordinates of the face
+        top, right, bottom, left = face_location
+
+        # Extract the face from the frame
+        face_image = rgb_frame_1[top:bottom, left:right]
+
+        # Use the face_recognition library to detect the facial landmarks
+        landmarks = face_recognition.face_landmarks(face_image)
+
+        # Check if the person is looking at the camera by checking the position of the pupils
+        if 'left_eye' in landmarks and 'right_eye' in landmarks:
+            left_pupil = landmarks['left_eye'][0]
+            right_pupil = landmarks['right_eye'][3]
+            if left_pupil[1] < left_pupil[0] and right_pupil[1] < right_pupil[0]:
+                # The person is looking at the camera
+                return True
+
+    # If we reach this point, the person is not looking at the camera
+    print("TEST546")
+    return False
     
 
 def get_encodings(path="", known_face_encodings=[], known_face_names=[]):
@@ -127,9 +175,7 @@ def process(worker_id, read_frame_list, write_frame_list, Global, worker_num):
             # See if the face is a match for the known face(s)
             #print(known_face_encodings["known_face_encodings"][0])
 
-            print("1234567890*******************************************\n\n")
-            print  (Global.known_face_encodings)
-            print("\n\n*******************************************")
+            
 
             matches = face_recognition.compare_faces(known_face_encodings, face_encodings)
 
@@ -140,14 +186,20 @@ def process(worker_id, read_frame_list, write_frame_list, Global, worker_num):
                 first_match_index = matches.index(True)
                 name = known_face_names[first_match_index]
 
+            if "Hendrik Siemens" in name:
+                #print("Admin present")
+                admin_cfg(1)
+            else:
+                #print("Admin not present")
+                admin_cfg(0)
+
             # Draw a box around the face
-            cv2.rectangle(frame_process, (left, top), (right, bottom), (0, 0, 255), 2)
+            cv2.rectangle(frame_process, (left, top), (right, bottom), (0, 215, 255), 2)
 
             # Draw a label with a name below the face
-            cv2.rectangle(frame_process, (left, bottom - 35), (right, bottom), (0, 0, 255), cv2.FILLED)
+            cv2.rectangle(frame_process, (left, bottom - 35), (right, bottom), (0, 215, 255), cv2.FILLED)
             font = cv2.FONT_HERSHEY_DUPLEX
-            if "Hendrik Siemens" in name:
-                name = name + " (Admin)"
+            if "Hendrik Siemens" in name: name = "Admin"
             cv2.putText(frame_process, name, (left + 6, bottom - 6), font, 1.0, (255, 255, 255), 1)
             i+=1
 
