@@ -173,10 +173,6 @@ def process(worker_id, read_frame_list, write_frame_list, Global, worker_num):
         i=0
         for (top, right, bottom, left), face_encodings in zip(face_locations, face_encodings):
             # See if the face is a match for the known face(s)
-            #print(known_face_encodings["known_face_encodings"][0])
-
-            
-
             matches = face_recognition.compare_faces(known_face_encodings, face_encodings)
 
             name = "Unknown"
@@ -187,10 +183,9 @@ def process(worker_id, read_frame_list, write_frame_list, Global, worker_num):
                 name = known_face_names[first_match_index]
 
             if "Hendrik Siemens" in name:
-                #print("Admin present")
                 admin_cfg(1)
+                name="Admin"
             else:
-                #print("Admin not present")
                 admin_cfg(0)
 
             # Draw a box around the face
@@ -199,7 +194,6 @@ def process(worker_id, read_frame_list, write_frame_list, Global, worker_num):
             # Draw a label with a name below the face
             cv2.rectangle(frame_process, (left, bottom - 35), (right, bottom), (0, 215, 255), cv2.FILLED)
             font = cv2.FONT_HERSHEY_DUPLEX
-            if "Hendrik Siemens" in name: name = "Admin"
             cv2.putText(frame_process, name, (left + 6, bottom - 6), font, 1.0, (255, 255, 255), 1)
             i+=1
 
@@ -212,11 +206,21 @@ def process(worker_id, read_frame_list, write_frame_list, Global, worker_num):
 
         # Expect next worker to write frame
         Global.write_num = next_id(Global.write_num, worker_num)
+    
 
+def set_frame_delay(Global, fps):
+    if fps < 6:
+        Global.frame_delay = (1 / fps) * 0.75
+    elif fps < 20:
+        Global.frame_delay = (1 / fps) * 0.5
+    elif fps < 30:
+        Global.frame_delay = (1 / fps) * 0.25
+    elif fps < 60:
+        Global.frame_delay = (1 / fps) * 0.1
+    else:
+        Global.frame_delay = 0
 
 if __name__ == '__main__':
-
-    
 
     # Fix Bug on MacOS
     if platform.system() == 'Darwin':
@@ -245,11 +249,6 @@ if __name__ == '__main__':
 
         Global.known_face_encodings += [tmp2]
         Global.known_face_names += [str(name.replace('.jpg',''))]
-   
-
-    print("*******************************************")
-    print  (Global.known_face_encodings)
-    print("*******************************************")
 
     # Number of workers (subprocess use to process frames)
     if cpu_count() > 2:
@@ -293,16 +292,9 @@ if __name__ == '__main__':
             # Larger ratio can make the video look smoother, but fps will hard to become higher.
             # Smaller ratio can make fps higher, but the video looks not too smoother.
             # The ratios below are tested many times.
-            if fps < 6:
-                Global.frame_delay = (1 / fps) * 0.75
-            elif fps < 20:
-                Global.frame_delay = (1 / fps) * 0.5
-            elif fps < 30:
-                Global.frame_delay = (1 / fps) * 0.25
-            else:
-                Global.frame_delay = 0
+            set_frame_delay(Global, fps)
 
-            # Display the resulting image
+            #  Display the resulting image 
             cv2.imshow('Video', write_frame_list[prev_id(Global.write_num, worker_num)])
 
         # Hit 'q' on the keyboard to quit!
