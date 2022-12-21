@@ -181,6 +181,7 @@ def process(worker_id, read_frame_list, write_frame_list, Global, worker_num):
             if True in matches:
                 first_match_index = matches.index(True)
                 name = known_face_names[first_match_index]
+                print("known_face_names[index]: " + str(first_match_index))
 
             if "Hendrik Siemens" in name:
                 admin_cfg(1)
