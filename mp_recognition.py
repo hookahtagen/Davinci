@@ -220,13 +220,7 @@ def set_frame_delay(Global, fps):
     else:
         Global.frame_delay = 0
 
-if __name__ == '__main__':
-
-    # Fix Bug on MacOS
-    if platform.system() == 'Darwin':
-        set_start_method('forkserver')
-
-    # Global variables
+def setGlobals():
     Global = Manager().Namespace()
     Global.device = 0
     Global.buff_num = 1
@@ -249,6 +243,16 @@ if __name__ == '__main__':
 
         Global.known_face_encodings += [tmp2]
         Global.known_face_names += [str(name.replace('.jpg',''))]
+    return Global,read_frame_list,write_frame_list
+
+if __name__ == '__main__':
+
+    # Fix Bug on MacOS
+    if platform.system() == 'Darwin':
+        set_start_method('forkserver')
+
+    # Global variables
+    Global, read_frame_list, write_frame_list = setGlobals()
 
     # Number of workers (subprocess use to process frames)
     if cpu_count() > 2:
