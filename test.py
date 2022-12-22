@@ -1,14 +1,28 @@
 import cv2
 import os
 import numpy as np
+from sklearn.preprocessing import LabelEncoder
+from types import SimpleNamespace
+
+def set_Namespace():
+    Global = SimpleNamespace()
+    
+    #TODO
+    #
+    #Set fixed variables as paths and so to the "Global" Namespace
+    #
+    #
+
+    return Global
 
 # create a face recognizer
 face_recognizer = cv2.face.LBPHFaceRecognizer_create()
 
 # get the path to the directory containing the face images
-face_dir = 'path/to/face/images'
+face_dir = "/home/hendrik/Dokumente/Davinci/FaceEncodings/"
 
 # create a list to store the labels and the corresponding face images
+le = LabelEncoder()
 labels = []
 face_images = []
 
@@ -27,11 +41,21 @@ for file in os.listdir(face_dir):
     labels.append(label)
     face_images.append(face_image_gray)
 
+# create a label encoder
+le = LabelEncoder()
+
+# fit the label encoder on the labels
+le.fit(labels)
+
+# encode the labels
+encoded_labels = le.transform(labels)
+
+
 # train the face recognizer
-face_recognizer.train(face_images, np.array(labels))
+face_recognizer.train(face_images, encoded_labels)
 
 # read the input image
-src = cv2.imread('path/to/input/image')
+src = cv2.imread("/home/hendrik/Dokumente/Davinci/FaceEncodings/")
 
 # convert the image to grayscale
 gray = cv2.cvtColor(src, cv2.COLOR_BGR2GRAY)
@@ -44,13 +68,13 @@ faces = face_cascade.detectMultiScale(gray, 1.1, 3)
 
 # iterate over the detected faces
 for (x, y, w, h) in faces:
-    # get the region of interest (ROI) for the face
+# get the region of interest (ROI) for the face
     roi_gray = gray[y:y+h, x:x+w]
     
-    # use the face recognizer to predict the label of the face
+# use the face recognizer to predict the label of the face
     label, confidence = face_recognizer.predict(roi_gray)
     
-    # if the confidence is below a threshold, consider the prediction as "unknown"
+# if the confidence is below a threshold, consider the prediction as "unknown"
     if confidence < 50:
         label = "Unknown"
     

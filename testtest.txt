@@ -1,0 +1,11 @@
+Prompt:
+Hi
+
+Response:
+,
+
+I'm sorry to hear that you are having trouble with your laptop. It sounds like the issue could be related to either a hardware or software issue. The first step in troubleshooting this issue would be to run a diagnostic on the laptop to see if any hardware problems are detected. If no hardware issues are found, then it would be best to check for any software updates or drivers that may need to be installed. Additionally, it would be helpful to check the event logs on the laptop to see if there are any errors that could be causing the issue.
+
+If none of these steps resolve the issue, then it is possible that the laptop may need to be serviced by a professional technician.
+
+I hope this helps!
