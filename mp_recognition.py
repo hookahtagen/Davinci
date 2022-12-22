@@ -300,8 +300,11 @@ def process(worker_id, read_frame_list, write_frame_list, Global, worker_num):
         # Convert the image from BGR color (which OpenCV uses) to RGB color (which face_recognition uses)
         rgb_frame = cv2.cvtColor(frame_process, cv2.COLOR_BGR2RGB)
 
-        # Find all the faces and face encodings in the frame of video, cost most timeq
-        face_locations = face_recognition.face_locations(rgb_frame)
+        # Find all the faces and face encodings in the frame of video, cost most time
+        if Global.use_cascade == 0:
+            face_locations = face_recognition.face_locations(rgb_frame)
+        else:
+            face_locations = Global.face_detector.detectMultiScale(rgb_frame, scaleFactor=1.1, minNeighbors=5)        
         face_encodings = face_recognition.face_encodings(rgb_frame, face_locations)
 
         # Loop through each face in this frame of video
@@ -325,12 +328,7 @@ def process(worker_id, read_frame_list, write_frame_list, Global, worker_num):
                 admin_cfg(0)
 
             # Draw a box around the face
-            cv2.rectangle(frame_process, (left, top), (right, bottom), (0, 215, 255), 2)
-
-            # Draw a label with a name below the face
-            cv2.rectangle(frame_process, (left, bottom - 35), (right, bottom), (0, 215, 255), cv2.FILLED)
-            font = cv2.FONT_HERSHEY_DUPLEX
-            cv2.putText(frame_process, name, (left + 6, bottom - 6), font, 1.0, (255, 255, 255), 1)
+            set_boxes(frame_process, top, right, bottom, left, name)
             i+=1
 
         # Wait to write
@@ -342,6 +340,13 @@ def process(worker_id, read_frame_list, write_frame_list, Global, worker_num):
 
         # Expect next worker to write frame
         Global.write_num = next_id(Global.write_num, worker_num)
+
+def set_boxes(frame_process, top, right, bottom, left, name):
+    cv2.rectangle(frame_process, (left, top), (right, bottom), (0, 215, 255), 2)
+
+    cv2.rectangle(frame_process, (left, bottom - 35), (right, bottom), (0, 215, 255), cv2.FILLED)
+    font = cv2.FONT_HERSHEY_DUPLEX
+    cv2.putText(frame_process, name, (left + 6, bottom - 6), font, 1.0, (255, 255, 255), 1)
     
 
 def set_frame_delay(Global, fps):
@@ -388,8 +393,10 @@ def setGlobals():
     Global.write_num = 1
     Global.frame_delay = 0
     Global.is_exit = False
+    Global.use_cascade = 0
     read_frame_list = Manager().dict()
     write_frame_list = Manager().dict()
+    Global.face_detector = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
 
     Global.path ="/home/hendrik/Dokumente/Davinci/FaceEncodings/"
     files = [f for f in listdir(Global.path) if isfile(join(Global.path, f))]
