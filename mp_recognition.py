@@ -304,7 +304,8 @@ def process(worker_id, read_frame_list, write_frame_list, Global, worker_num):
         if Global.use_cascade == 0:
             face_locations = face_recognition.face_locations(rgb_frame)
         else:
-            face_locations = Global.face_detector.detectMultiScale(rgb_frame, scaleFactor=1.1, minNeighbors=5)        
+            face_detector = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
+            face_locations = face_detector.detectMultiScale(rgb_frame, scaleFactor=1.1, minNeighbors=2)        
         face_encodings = face_recognition.face_encodings(rgb_frame, face_locations)
 
         # Loop through each face in this frame of video
@@ -396,7 +397,7 @@ def setGlobals():
     Global.use_cascade = 0
     read_frame_list = Manager().dict()
     write_frame_list = Manager().dict()
-    Global.face_detector = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
+    #Global.face_detector = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
 
     Global.path ="/home/hendrik/Dokumente/Davinci/FaceEncodings/"
     files = [f for f in listdir(Global.path) if isfile(join(Global.path, f))]
