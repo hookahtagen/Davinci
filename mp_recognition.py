@@ -391,7 +391,7 @@ def setGlobals():
     read_frame_list = Manager().dict()
     write_frame_list = Manager().dict()
 
-    Global.path ="/home/hendrik/Dokumente/Davinci/Davinci/FaceEncodings/"
+    Global.path ="/home/hendrik/Dokumente/Davinci/FaceEncodings/"
     files = [f for f in listdir(Global.path) if isfile(join(Global.path, f))]
 
     Global.known_face_encodings=[]
