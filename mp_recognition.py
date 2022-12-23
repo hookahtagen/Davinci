@@ -285,8 +285,8 @@ def process(worker_id, read_frame_list, write_frame_list, Global, worker_num):
             # If the user has requested to end the app, then stop waiting for webcam frames
             if Global.is_exit:
                 break
-
-            time.sleep(0.01)
+            time.sleep(Global.delay)
+            
 
         # Delay to make the video look smoother
         time.sleep(Global.frame_delay)
@@ -334,7 +334,7 @@ def process(worker_id, read_frame_list, write_frame_list, Global, worker_num):
 
         # Wait to write
         while Global.write_num != worker_id:
-            time.sleep(0.01)
+            time.sleep(Global.delay)
 
         # Send frame to global
         write_frame_list[worker_id] = frame_process
@@ -370,7 +370,7 @@ def set_frame_delay(Global, fps):
     elif fps < 30:
         Global.frame_delay = (1 / fps) * 0.25
     elif fps < 60:
-        Global.frame_delay = (1 / fps) * 0.1
+        Global.frame_delay = (1 / fps) * 0.01
     else:
         Global.frame_delay = 0
 
@@ -394,7 +394,8 @@ def setGlobals():
     Global.write_num = 1
     Global.frame_delay = 0
     Global.is_exit = False
-    Global.use_cascade = 0
+    Global.use_cascade = 1              # 0 = don't use cascade; 1 = use cascade
+    Global.delay = 0.01
     read_frame_list = Manager().dict()
     write_frame_list = Manager().dict()
     #Global.face_detector = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
@@ -453,6 +454,8 @@ if __name__ == '__main__':
     for worker_id in range(1, worker_num + 1):
         p.append(Process(target=process, args=(worker_id, read_frame_list, write_frame_list, Global, worker_num,)))
         p[worker_id].start()
+    
+    
 
     # Start to show video
     last_num = 1
