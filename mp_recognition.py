@@ -394,7 +394,7 @@ def setGlobals():
     Global.write_num = 1
     Global.frame_delay = 0
     Global.is_exit = False
-    Global.use_cascade = 1              # 0 = don't use cascade; 1 = use cascade
+    Global.use_cascade = 0              # 0 = don't use cascade; 1 = use cascade
     Global.delay = 0.01
     read_frame_list = Manager().dict()
     write_frame_list = Manager().dict()
