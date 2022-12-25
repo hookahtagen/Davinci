@@ -29,7 +29,8 @@ face_encoding = "id INTEGER PRIMARY KEY, person_id INTEGER NOT NULL, encoding BL
 
 #create two tables containing the keys listed above
 
-
+cursor.execute("CREATE TABLE persons (id INTEGER PRIMARY KEY, name TEXT, gender TEXT, age INTEGER, address TEXT, city TEXT, country TEXT)")
+cursor.execute("CREATE TABLE faceencodings (id INTEGER PRIMARY KEY, person_id INTEGER, data BLOB, timestamp REAL, FOREIGN KEY (person_id) REFERENCES persons(id))")
 
 
 clear_screen()
