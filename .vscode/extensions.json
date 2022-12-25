@@ -1,5 +1,6 @@
 {
     "recommendations": [
-        "disable-copilot-comment-completions.disable-copilot-comment-completions"
+        "disable-copilot-comment-completions.disable-copilot-comment-completions",
+        "draivin.hscopes"
     ]
 }
