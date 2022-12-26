@@ -4,7 +4,6 @@ admin.db
 faceencodings.db
 
 #Directories:
-Database/*.py
 Database/*.db
 Database/ToBeImported/*/*.jpg
 Logs/*.*
