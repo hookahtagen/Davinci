@@ -4,6 +4,7 @@ admin.db
 faceencodings.db
 
 #Directories:
-Database/*
-Logs/*
-chatgpt-thread*
+Database/*.py
+Database/*.db
+Logs/*.*
+chatgpt-thread*.md
