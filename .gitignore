@@ -1,5 +1,7 @@
 #Files:
 admin.cfg
+admin.db
+faceencodings.db
 
 #Directories:
 Database/*
