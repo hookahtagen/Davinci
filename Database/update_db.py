@@ -168,7 +168,7 @@ def change_person( conn = None, cursor = None):
     #Print a warning to the user displaying the needed file structure and then ask the user for the path to the pictures.
     print_warning()
 
-    #Ask the user for the path to the pictures....
+    #Ask the user for the path to the pictures.
     path=input( '\n\nPath to pictures:' )
 
     #Ask the user for the personal details of the person.
