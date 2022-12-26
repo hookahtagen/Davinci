@@ -1,13 +1,7 @@
-# How to setup .gitignore file in your project
-# 1. Create a file named .gitignore in the root of your project.
-# 2. Add the files you want to ignore in the .gitignore file.
-# 3. Commit the .gitignore file to your repository.
-
-# How to ignore directories in .gitignore file:
-# 1. Add the directory name to the .gitignore file.
-# 2. Add a slash (/) at the end of the directory name.
-# 3. Add a star (*) at the end of the directory name.
-
+#Files:
 admin.cfg
+
+#Directories:
 Database/*
-Database/update_db.py
+Logs/*
+chatgpt-thread*
