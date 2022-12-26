@@ -5,7 +5,7 @@ import time
 import sys
 import face_recognition
 
-check_operand = False
+check_operand = True
 db_name = 'FaceEncodings'
 
 #List of currently supported commands
@@ -17,14 +17,15 @@ supported_commands = [
 
 #Check if the entered command is a valid command and checks for any errors
 #that might occur.
-try:
-    if ".db" in sys.argv[ 1 ]: db_name = sys.argv[ 1 ]
-    else: print( f'Theres a problem with the entered database_file. Please try again.' ), sys.exit( 1 )
-    if sys.argv[ 2 ] in supported_commands:
-        check_operand = True
-except IndexError:
-    print( f'You entered no or too few arguments. Please try again.' )
-    sys.exit( 1 )
+
+# try:
+#     if ".db" in sys.argv[ 1 ]: db_name = sys.argv[ 1 ]
+#     else: print( f'Theres a problem with the entered database_file. Please try again.' ), sys.exit( 1 )
+#     if sys.argv[ 2 ] in supported_commands:
+#         check_operand = True
+# except IndexError:
+#     print( f'You entered no or too few arguments. Please try again.' )
+#     sys.exit( 1 )
 
 
 # Database name = FaceEncodings.db
@@ -33,12 +34,11 @@ except IndexError:
 # structure of 'persons': id INTEGER PRIMARY KEY, name TEXT, gender TEXT, age INTEGER, address TEXT, city TEXT, country TEXT
 # structure of 'faceencodings': id INTEGER PRIMARY KEY, person_id INTEGER, data BLOB, timestamp REAL, FOREIGN KEY (person_id) REFERENCES persons(id)
 
-def add_menu( num ):
+def add_menu( num = 0):
     add_menu = [
         f'You want to add { num } pictures.',
-        f'Please enter now a path, where the files are located and then hit ENTER:',
-        f'\nThe filenames of the pictures you want to add should have the following format: forename-surename-index.jpg',
-        f'Please paste them separated by a semicolon >>(;)<<. For example: jon-doe-1.jpg, jon-doe-2.jpg, ...'
+        f'Please enter now a path, where the pictures are located and then hit ENTER:',
+        f'\nEnter the name of the person in the following format: forename surename',
     ]
     return add_menu
 
@@ -62,49 +62,53 @@ def connect_to_db( db_name ):
     cursor = conn.cursor( )
     return conn, cursor
 
-def get_face_encodings( file_path = None, filename_list = None, known_face_encodings = [ ] ):
-    """ 
-    Explanation: 
-        This function reads all the images in the given path, extracts their face encodings and names,
-        and stores them in the given lists.
-    
+def get_face_encodings( path_of_pics = None , name = None ):
+    '''
+    Explanation:
+        This function gets all face encodings of a given person under a given path.
+        It returns a dictionary with the filename as key and the face encoding as value.
     Parameters:
-        file_path (str): The path to the directory containing the images.
-        known_face_encodings (list): A list to store the face encodings in.
-    
+        path_of_pics = string: path to the pictures
+        name = string: name of the person
     Returns:
-        tuple: A tuple containing the updated lists of face encodings and names. 
-    """
+        processed_faces = dictionary: dictionary with the filename as key and the face encoding as value.
+    '''
 
-    clear_screen()
-    if filename_list is None or file_path is None or None in filename_list:
-        print( f'Image List not found or corrupted. Please try again.')
+    name = name.lower().replace( ' ', '-' ).replace( '\n', '' )
+    processed_faces = { }
+
+    if path_of_pics and os.listdir( path_of_pics ):
+
+        for listitem in os.listdir( path_of_pics ):
+            tmp = listitem.replace( '.jpg', '' ).replace( ' ', '-' )
+            if tmp not in processed_faces and name in tmp:
+                tmp0 = name
+                processed_faces[tmp0] = []
+            else:
+                continue
+
+        for filename in os.listdir( path_of_pics ):
+            filename = filename.lower().replace( ' ', '-' ).replace( '\n', '' )
+            if filename.endswith( '.jpg' ) and name in filename:
+                tmp1 = filename.replace( '-', ' ' )
+                image = face_recognition.load_image_file( f'{ path_of_pics }/{ tmp1 }' )
+                face_locations = face_recognition.face_locations( image )
+                if len( face_locations ) > 1:
+                    print( f'There are more than one face in { filename }' )
+                    continue
+                elif len( face_locations ) == 0:
+                    print( f'There are no faces in { filename }' )
+                    continue
+                else:
+                    face_encoding = face_recognition.face_encodings( image, face_locations, num_jitters = 50 )[ 0 ]
+                    processed_faces[ name ].append(face_encoding)
+                    print( f'Face encoding of { filename } was processed' )
+    else:
+        print( 'No path was given or the path is wrong!' )
         sys.exit( 1 )
+    return processed_faces
 
-    
-    #Get all Pictures under the given path
-    #Store them in a list with file-endings
-    
-    for name in filename_list:
-        path = file_path + name
-
-        tmp1 = face_recognition.load_image_file(path)
-        tmp2 = face_recognition.face_encodings(tmp1)[0]
-
-        locals()[name.replace('.jpg','_image')] = tmp1
-        locals()[name.replace('.jpg','_encoding')] = tmp2
-    
-    for listitem in filename_list:
-        known_face_encodings.append(str(listitem.replace('.jpg','_encoding').replace(' ','_')))
-
-    print("TestTestTest***********************")
-    print(known_face_encodings)
-    print("TestTestTest**********************")
-
-    return known_face_encodings
-
-
-def prnt_menu( add_menu_a, num1 = 0, num2 = 0 ):
+def prnt_menu( add_menu_a, num1 = 0, num2 = None ):
     '''
     Explanation: 
         Prints the menu in the function add_person( )
@@ -115,31 +119,42 @@ def prnt_menu( add_menu_a, num1 = 0, num2 = 0 ):
         num2 = int: which line to display second    
     Returns:
         None
-    '''  
-
+    '''
+        
     print( add_menu_a[ num1 ] )
     print( add_menu_a[ num2 ] )
 
-def add_person( ):
+def add_person( conn = None, cursor = None):
+    """ 
+    Explanation: 
+        This function adds a person to the database and all corresponding data
+        by any given key values for the database call, such as name, id, address and so.
+        
+    
+    Parameters:
+        None  
+    
+    Returns:
+        None
+    """    
+
     num = int( input( 'How many pictures do you want to add? ' ) )
     add_menu_a = add_menu( num )
 
+    #Ask the user to input a path and store it under path
     print( '\n\n' )
     prnt_menu( add_menu_a, 0, 1 )
     path=input( '' )
-    prnt_menu( add_menu_a, 2, 3 )
+    prnt_menu( add_menu_a, 0, 2 )
 
-    file_names = input( '\n\nFilenames: ' )
-    filenames_list=[ ]; filenames_list=file_names.split( ',' )
-    filenames_list = [ filename.strip( ) for filename in filenames_list ]
+    #Ask the user to input a name and store it under file_names
+    name = input( '\n\nName of person: ' )
     
-    p_face_encodings = get_face_encodings( path, filenames_list )
-
-    print( p_face_encodings )
-
+    #Get all faceencodings of the given person under the given path.
+    processed_faces = get_face_encodings( path, name )
     
-    #Filenames list is no longer needed in the future.
-    #The user has just to specify a path via gui, and that chosen path is stored under a variable
+    print( processed_faces )
+    
     
 
 def del_person( ):
@@ -159,13 +174,18 @@ def del_person( ):
     a=0
 
 def main( ):
+    #Ask the user to input a database name and store it under db_name and check if the entered name is a valid database name
+    db_name = input( 'Please enter a database name: ' )
+
+    #Connect to the database:
+    conn, cursor = connect_to_db( db_name )
     clear_screen( )
-    add_person( )
+    add_person( conn, cursor)
     
     
 
 if __name__ == '__main__':
-    if check_operand and len( sys.argv ) == 3:
+    if check_operand: #and len( sys.argv ) == 2:
         main( )
     else:
             print( 'Bad argument or too many arguments! Please check your entered command again and then try again' )
@@ -176,5 +196,4 @@ if __name__ == '__main__':
             print( f'Supported Commands:\n { supported_commands }' )
             sys.exit( 0 )       
 
-#EOF
 
