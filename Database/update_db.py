@@ -5,28 +5,6 @@ import time
 import sys
 import face_recognition
 
-check_operand = True
-db_name = 'FaceEncodings'
-
-#List of currently supported commands
-supported_commands = [
-    "add",
-    "del",
-    "update"
-]
-
-#Check if the entered command is a valid command and checks for any errors
-#that might occur.
-
-# try:
-#     if ".db" in sys.argv[ 1 ]: db_name = sys.argv[ 1 ]
-#     else: print( f'Theres a problem with the entered database_file. Please try again.' ), sys.exit( 1 )
-#     if sys.argv[ 2 ] in supported_commands:
-#         check_operand = True
-# except IndexError:
-#     print( f'You entered no or too few arguments. Please try again.' )
-#     sys.exit( 1 )
-
 
 # Database name = FaceEncodings.db
 # Num of tables = 2
@@ -34,13 +12,7 @@ supported_commands = [
 # structure of 'persons': id INTEGER PRIMARY KEY, name TEXT, gender TEXT, age INTEGER, address TEXT, city TEXT, country TEXT
 # structure of 'faceencodings': id INTEGER PRIMARY KEY, person_id INTEGER, data BLOB, timestamp REAL, FOREIGN KEY (person_id) REFERENCES persons(id)
 
-def add_menu( num = 0):
-    add_menu = [
-        f'You want to add { num } pictures.',
-        f'Please enter now a path, where the pictures are located and then hit ENTER:',
-        f'\nEnter the name of the person in the following format: forename surename',
-    ]
-    return add_menu
+
 
 def clear_screen( ):
     os.system( 'clear' )
@@ -61,6 +33,31 @@ def connect_to_db( db_name ):
     conn = s.connect( db_name ) 
     cursor = conn.cursor( )
     return conn, cursor
+
+def add_menu( num = 0):
+    add_menu = [
+        f'You want to add { num } pictures.',
+        f'Please enter now a path, where the pictures are located and then hit ENTER:',
+        f'\nEnter the name of the person in the following format: forename surename',
+    ]
+    return add_menu
+def ad_personal_details():
+    '''
+    Explanation:
+        This function asks the user for the personal details of the person.
+        The user is asked for age, address and phone number which are stored in separate variables.
+    Parameters:
+        None
+    Returns:
+        name, age, address, phone_number
+    '''
+
+    name = input( 'Name: ' )
+    age = input( 'Age: ' )
+    address = input( 'Address: ' )
+    phone_number = input( 'Phone number: ' )
+    return name, age, address, phone_number
+    
 
 def get_face_encodings( path_of_pics = None , name = None ):
     '''
@@ -108,54 +105,100 @@ def get_face_encodings( path_of_pics = None , name = None ):
         sys.exit( 1 )
     return processed_faces
 
-def prnt_menu( add_menu_a, num1 = 0, num2 = None ):
+def print_warning( ):
     '''
-    Explanation: 
-        Prints the menu in the function add_person( )
-    
+    Explanation:
+        This function prints a warning to the user and displaying the needed file structure for importing the pictures
+        into the program and tells the user to follow the file structure precisely.
+        File structure:
+            - path
+                forename-surename 1:
+                    forename-surename-1.jpg
+                    forename-surename-2.jpg
+                    forename-surename-3.jpg
+                    ...
+                forename-surename 2:
+                    forename-surename 2-1.jpg
+                    forename-surename 2-2.jpg
+                    forename-surename 2-3.jpg
+                    ...
+                ...
     Parameters:
-        add_menu_a: list of strings containing menu texts
-        num1 = int: which line to display first
-        num2 = int: which line to display second    
+        None
     Returns:
         None
     '''
-        
-    print( add_menu_a[ num1 ] )
-    print( add_menu_a[ num2 ] )
 
-def add_person( conn = None, cursor = None):
+    file_structure = [
+        'File structure:',
+        '- path',
+        '    forename-surename 1:',
+        '        forename-surename-1.jpg',  
+        '        forename-surename-2.jpg',
+        '        forename-surename-3.jpg',
+        '        ...',
+        '    forename-surename 2:',
+        '        forename-surename 2-1.jpg',
+        '        forename-surename 2-2.jpg',
+        '        forename-surename 2-3.jpg',
+        '        ...',
+        '    ...',
+    ]
+
+    print( 'WARNING: Please follow the file structure precisely!' )
+    print( 'File structure:' )
+    for item in file_structure:
+        print( item )
+   
+
+    
+def change_person( conn = None, cursor = None):
     """ 
     Explanation: 
         This function adds a person to the database and all corresponding data
         by any given key values for the database call, such as name, id, address and so.
-        
-    
+        The function also adds the face encodings of the person to the database.
     Parameters:
         None  
     
     Returns:
         None
-    """    
+    """
 
-    num = int( input( 'How many pictures do you want to add? ' ) )
-    add_menu_a = add_menu( num )
+    #Print a warning to the user displaying the needed file structure and then ask the user for the path to the pictures.
+    print_warning()
+    path=input( '\n\nPath to pictures:' )
 
-    #Ask the user to input a path and store it under path
-    print( '\n\n' )
-    prnt_menu( add_menu_a, 0, 1 )
-    path=input( '' )
-    prnt_menu( add_menu_a, 0, 2 )
+    #Ask the user for the personal details of the person.
+    name, age, address, phone = ad_personal_details()
 
-    #Ask the user to input a name and store it under file_names
-    name = input( '\n\nName of person: ' )
-    
     #Get all faceencodings of the given person under the given path.
     processed_faces = get_face_encodings( path, name )
+
+    #Insert the person and its data into the database; avoid string formatting to build the sql query. Keep the previously described database structure in mind and insert the face encodings into the database. Commit the changes to the database.
+    cursor.execute( 'INSERT INTO persons(name, age, address, phone) VALUES(?, ?, ?, ?)', (name, age, address, phone) )
+    conn.commit( )
     
-    print( processed_faces )
+    #Get the id of the person from the database.
+    cursor.execute( 'SELECT id FROM persons WHERE name = ?', (name, ) )
+    person_id = cursor.fetchone( )[ 0 ]
+
+    #Insert the face encodings into the database.
+    for face_encodings in processed_faces[ name ]:
+        cursor.execute( 'INSERT INTO faceencodings(person_id, data) VALUES(?, ?)', (person_id, face_encodings.tobytes( ) ) )
+        conn.commit( )
+
+    #Check if the person was added to the database successfully and print a message to the user
+    cursor.execute( 'SELECT * FROM persons WHERE name = ?', (name, ) )
+    if cursor.fetchone( ):
+        print( f'{ name } was added to the database successfully' )
+    else:
+        print( f'{ name } was not added to the database successfully' )
+
+
+
     
-    
+
 
 def del_person( ):
     '''
@@ -171,6 +214,8 @@ def del_person( ):
     Returns:
         None
     '''
+
+    #To be implemented
     a=0
 
 def main( ):
@@ -179,21 +224,19 @@ def main( ):
 
     #Connect to the database:
     conn, cursor = connect_to_db( db_name )
-    clear_screen( )
-    add_person( conn, cursor)
-    
-    
 
+    #Clear the screen befor continuing
+    clear_screen( )
+
+    #Add or update a person to/in the database
+    change_person( conn, cursor)
+    
+    
+#Run the main function if the program is run directly
 if __name__ == '__main__':
-    if check_operand: #and len( sys.argv ) == 2:
-        main( )
-    else:
-            print( 'Bad argument or too many arguments! Please check your entered command again and then try again' )
-            if check_operand == False: 
-                print( f'\n*{ sys.argv[2] }* isn\'t a supported command.\n\n' )
-            if len( sys.argv ) > 3: 
-                print( f'You entered too many arguments. You entered { len( sys.argv ) }' )
-            print( f'Supported Commands:\n { supported_commands }' )
-            sys.exit( 0 )       
+
+    #Run the main function
+    main( )
+    
 
 
