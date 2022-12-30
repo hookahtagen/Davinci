@@ -335,8 +335,8 @@ def add_person( conn: object, cursor: object) -> None:
         cursor.execute( sql_query, ( face_encoding, ) )
         result = cursor.fetchone( )
         if result is None:
-            sql_query = 'INSERT INTO faceencodings ( id, file_name, face_encoding ) VALUES ( ?, ?, ? )'
-            cursor.execute( sql_query, ( last_id, filename, face_encoding ) )
+            sql_query = 'INSERT INTO faceencodings ( id, face_encoding ) VALUES ( ?, ? )'
+            cursor.execute( sql_query, ( last_id, face_encoding ) )
 
     check_data( conn, name, age, address, phone_number )
     #Commit the changes to the database
