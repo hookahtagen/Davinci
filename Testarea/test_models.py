@@ -11,7 +11,7 @@ import os
 from PIL import Image
 import numpy as np
 
-path_to_image = '/home/hendrik/Documents/Davinci/Testarea/test4.jpg' 
+path_to_image = '/home/hendrik/Documents/Davinci/Testarea/test1.jpg' 
 exit_flag: bool = False
 
 
@@ -34,7 +34,7 @@ def scale_image( image: object, direction: str ):
 
 def get_location( image: object ):
     image = scale_image( image, 'down' )
-    face_location = face_recognition.face_locations( image, number_of_times_to_upsample=6, model='hog' )
+    face_location = face_recognition.face_locations( image, number_of_times_to_upsample=3, model='hog' )
     
     # Scale up the face locations in 'face_location' by a factor of 4
     for i, value in enumerate( face_location ):
