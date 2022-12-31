@@ -18,7 +18,7 @@
             "request": "launch",
             "program": "${file}",
             "args": [
-                "add"
+                "mute"
             ],
             "console": "integratedTerminal",
             "justMyCode": true
